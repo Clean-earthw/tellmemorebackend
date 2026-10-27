@@ -3,6 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app import db
 from app.config import get_settings
@@ -53,6 +54,27 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Lorebook API", lifespan=lifespan)
+
+# CORS: allow the deployed frontend (and local dev) to call the API.
+# Note: allow_origins must be explicit when allow_credentials=True.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://tellmemorefrontend.vercel.app",
+        # Local development origins:
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ],
+    # Allow Vercel preview deployments (e.g. tellmemorefrontend-git-*.vercel.app)
+    allow_origin_regex=r"https://tellmemorefrontend-[a-z0-9-]+\.vercel\.app",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,
+)
 
 for r in (
     families,
